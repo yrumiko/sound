@@ -24,8 +24,11 @@
 
 <!-- 音声ファイル -->
 <audio id="bgm1" preload loop>
-    <source src="op.mp3" type="audio/mp3">
-  </audio>
+    <source src="op1.mp3" type="audio/mp3">
+</audio>
+<audio id="bgm2" preload loop>
+    <source src="op2.mp3" type="audio/mp3">
+</audio>
 
 <script type="module">
     const body = document.body;
@@ -34,6 +37,7 @@
     function colorPids(volume) {
         const amountOfPids = Math.round(volume / 10);
         const bgm1 = document.querySelector("#bgm1"); 
+        const bgm2 = document.querySelector("#bgm2"); 
         pids.forEach((pid, index) => {
             if (index < amountOfPids) {
                 console.log(volume);
@@ -41,8 +45,13 @@
                 if(volume>50){
                     bgm1.play();
                     bgm1.volume = 1.0;
+                    bgm2.play();
+                    bgm2.volume = 1.0;
                 }
-                else {bgm1.pause();}
+                else {
+                    bgm1.pause();
+                    bgm2.pause();
+                }
             } else {
                 pid.style.backgroundColor = "var(--mic-volume-bar-backGroundColor)";
             }
