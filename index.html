@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MuteBar</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body data-is-muted="false">
+<div id="volumebar">
+    <div id="mutebar"></div>
+    <div id="pidRoot">
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+        <div class="pid"></div>
+    </div>
+</div>
+
+<!-- 音声ファイル -->
+<audio id="bgm1" preload loop>
+    <source src="op.mp3" type="audio/mp3">
+  </audio>
+
+<script type="module">
+    const body = document.body;
+    const pids = Array.from(document.querySelectorAll(".pid"));
+
+    function colorPids(volume) {
+        const amountOfPids = Math.round(volume / 10);
+        const bgm1 = document.querySelector("#bgm1"); 
+        pids.forEach((pid, index) => {
+            if (index < amountOfPids) {
+                console.log(volume);
+                pid.style.backgroundColor = "var(--mic-volume-bar-color)";
+                if(volume>50){
+                    bgm1.play();
+                    bgm1.volume = 1.0;
+                }
+                else {bgm1.pause();}
+            } else {
+                pid.style.backgroundColor = "var(--mic-volume-bar-backGroundColor)";
+            }
+        });
+    }
+
+    const onWakeup = (cb) => {
+        const intervalMs = 2000;
+        let lastTime = (new Date()).getTime();
+        setInterval(function() {
+            const currentTime = (new Date()).getTime();
+            const paddingMs = intervalMs * 2;
+            if (currentTime > (lastTime + paddingMs)) {  // ignore small delays
+                cb();
+            }
+            lastTime = currentTime;
+        }, intervalMs);
+    };
+
+    const updateMuteBar = ({ isMute: isMuted }) => {
+        body.dataset.isMuted = isMuted;
+    };
+    const listen = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        const audioTrack = stream.getAudioTracks()[0];
+        const unMuted = () => {
+            updateMuteBar({ isMute: false });
+        };
+        const muted = () => {
+            updateMuteBar({ isMute: true });
+        };
+        const ended = () => {
+            updateMuteBar({ isMute: audioTrack.muted });
+        };
+        audioTrack.addEventListener("mute", muted);
+        audioTrack.addEventListener("unmute", unMuted);
+        audioTrack.addEventListener("ended", ended);
+        const audioContext = new AudioContext();
+        const analyser = audioContext.createAnalyser();
+        const microphone = audioContext.createMediaStreamSource(stream);
+        const audioNode = audioContext.createScriptProcessor(512, 1, 1);
+        analyser.smoothingTimeConstant = 0.8;
+        analyser.fftSize = 512;
+        microphone.connect(analyser);
+        analyser.connect(audioNode);
+        audioNode.connect(audioContext.destination);
+        const audioprocess = () => {
+            const frequencyArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(frequencyArray);
+            let values = 0;
+            const lengthOfAnalyser = frequencyArray.length;
+            for (let i = 0; i < lengthOfAnalyser; i++) {
+                values += (frequencyArray[i]);
+            }
+            const average = values / lengthOfAnalyser;
+            colorPids(average);
+        };
+        audioNode.addEventListener("audioprocess", audioprocess);
+        updateMuteBar({ isMute: audioTrack.muted });
+        return () => {
+            audioTrack.removeEventListener("mute", muted);
+            audioTrack.removeEventListener("unmute", unMuted);
+            audioTrack.removeEventListener("ended", ended);
+            audioNode.removeEventListener("audioprocess", audioprocess);
+        };
+    };
+    const unlisten = listen();
+    window.addEventListener("unload", () => {
+        unlisten();
+    });
+    onWakeup(() => {
+        window.location.reload();
+    });
+</script>
+</body>
+</html>
