@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>MuteBar</title>
     <link rel="stylesheet" href="index.css">
+    <script src="popup.js"></script>
 </head>
 <body data-is-muted="false">
 <div id="volumebar">
@@ -43,14 +44,15 @@
                 console.log(volume);
                 pid.style.backgroundColor = "var(--mic-volume-bar-color)";
                 if(volume>50){
-                    bgm1.play();
+                    ShowSubWindow();
+                    /*bgm1.play();
                     bgm1.volume = 1.0;
                     bgm2.play();
-                    bgm2.volume = 1.0;
+                    bgm2.volume = 1.0;*/
                 }
                 else {
-                    bgm1.pause();
-                    bgm2.pause();
+                    //bgm1.pause();
+                    //bgm2.pause();
                 }
             } else {
                 pid.style.backgroundColor = "var(--mic-volume-bar-backGroundColor)";
